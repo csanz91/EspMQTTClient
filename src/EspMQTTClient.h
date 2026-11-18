@@ -1,31 +1,50 @@
 #ifndef ESP_MQTT_CLIENT_H
 #define ESP_MQTT_CLIENT_H
 
-#include <ArduinoOTA.h>
+// Optional features, off unless the build enables them:
+//   -DESPMQTTCLIENT_ENABLE_OTA          ArduinoOTA (enableOTA())
+//   -DESPMQTTCLIENT_ENABLE_WEB_UPDATER  HTTP web updater on port 80 (enableHTTPWebUpdater())
+// Either one also links mDNS. With both off, enableOTA() and
+// enableHTTPWebUpdater() are not declared, so calling them fails to compile.
+#if defined(ESPMQTTCLIENT_ENABLE_OTA) || defined(ESPMQTTCLIENT_ENABLE_WEB_UPDATER)
+  #define ESPMQTTCLIENT_USE_MDNS
+#endif
+
+#ifdef ESPMQTTCLIENT_ENABLE_OTA
+  #include <ArduinoOTA.h>
+#endif
 #include <PubSubClient.h>
 #include <vector>
 
 #ifdef ESP8266
 
   #include <ESP8266WiFi.h>
-  #include <ESP8266WebServer.h>
-  #include <ESP8266mDNS.h>
-  #include <ESP8266HTTPUpdateServer.h>
+  #ifdef ESPMQTTCLIENT_ENABLE_WEB_UPDATER
+    #include <ESP8266WebServer.h>
+    #include <ESP8266HTTPUpdateServer.h>
+    #define ESPHTTPUpdateServer ESP8266HTTPUpdateServer
+    #define WebServer ESP8266WebServer
+  #endif
+  #ifdef ESPMQTTCLIENT_USE_MDNS
+    #include <ESP8266mDNS.h>
+    #define ESPmDNS ESP8266mDNS
+  #endif
 
   #define DEFAULT_MQTT_CLIENT_NAME "ESP8266"
-  #define ESPHTTPUpdateServer ESP8266HTTPUpdateServer
-  #define ESPmDNS ESP8266mDNS
-  #define WebServer ESP8266WebServer
 
 #else // for ESP32
 
   #include <WiFi.h>
-  #include <WebServer.h>
-  #include <ESPmDNS.h>
-  #include "ESP32HTTPUpdateServer.h"
+  #ifdef ESPMQTTCLIENT_ENABLE_WEB_UPDATER
+    #include <WebServer.h>
+    #include "ESP32HTTPUpdateServer.h"
+    #define ESPHTTPUpdateServer ESP32HTTPUpdateServer
+  #endif
+  #ifdef ESPMQTTCLIENT_USE_MDNS
+    #include <ESPmDNS.h>
+  #endif
 
   #define DEFAULT_MQTT_CLIENT_NAME "ESP32"
-  #define ESPHTTPUpdateServer ESP32HTTPUpdateServer
 
 #endif
 
@@ -75,12 +94,16 @@ private:
   std::vector<TopicSubscriptionRecord> _topicSubscriptionList;
 
   // HTTP/OTA update related
+#ifdef ESPMQTTCLIENT_ENABLE_WEB_UPDATER
   char* _updateServerAddress;
   char* _updateServerUsername;
   char* _updateServerPassword;
   WebServer* _httpServer;
   ESPHTTPUpdateServer* _httpUpdater;
+#endif
+#ifdef ESPMQTTCLIENT_ENABLE_OTA
   bool _enableOTA;
+#endif
 
   // Delayed execution related
   struct DelayedExecutionRecord {
@@ -137,9 +160,13 @@ public:
 
   // Optional functionality
   void enableDebuggingMessages(const bool enabled = true); // Allow to display useful debugging messages. Can be set to false to disable them during program execution
+#ifdef ESPMQTTCLIENT_ENABLE_WEB_UPDATER
   void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/"); // Activate the web updater, must be set before the first loop() call.
   void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to _mqttUsername and _mqttPassword
+#endif
+#ifdef ESPMQTTCLIENT_ENABLE_OTA
   void enableOTA(const char *password = NULL, const uint16_t port = 0); // Activate OTA updater, must be set before the first loop() call.
+#endif
   void enableMQTTPersistence(); // Tell the broker to establish a persistent connection. Disabled by default. Must be called before the first loop() execution
   void enableLastWillMessage(const char* topic, const char* message, const bool retain = false); // Must be set before the first loop() call.
   void enableDrasticResetOnConnectionFailures() {_drasticResetOnConnectionFailures = true;} // Can be usefull in special cases where the ESP board hang and need resetting (#59)

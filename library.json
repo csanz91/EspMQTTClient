@@ -18,10 +18,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zimbora/EspMQTTClient.git"
+    "url": "https://github.com/csanz91/EspMQTTClient.git"
   },
-  "version": "1.13.4",
+  "version": "1.14.0",
   "frameworks": "arduino",
+  "build": {
+    "libLDFMode": "chain+"
+  },
   "platforms": ["espressif8266", "espressif32"],
   "dependencies": [
     {

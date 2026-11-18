@@ -105,7 +105,7 @@ Enable debugging messages that will output to serial.
 void enableDebuggingMessages(const bool enabled = true);
 ```
 
-Enable the web updater. This will host a simple form that will allow firmware upgrade (using, e.g., the `.bin` file produced by "Export Compiled Binary" in the Arduino IDE's "Sketch" menu). Must be set before the first loop() call.
+Enable the web updater (needs the `ESPMQTTCLIENT_ENABLE_WEB_UPDATER` build flag, see [Optional features](#optional-features)). This will host a simple form that will allow firmware upgrade (using, e.g., the `.bin` file produced by "Export Compiled Binary" in the Arduino IDE's "Sketch" menu). Must be set before the first loop() call.
 ```c++
 void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/");
 
@@ -151,6 +151,20 @@ Some useful getters
 const char* getMqttClientName();
 const char* getMqttServerIp();
 const uint16_t getMqttServerPort();
+```
+
+### Optional features
+
+ArduinoOTA and the HTTP web updater are left out of the build unless you turn them on with a build flag. Either one also links mDNS. Leaving them out saves about 26 KB of flash on ESP8266 and about 56 KB on ESP32.
+
+| Build flag | Enables |
+|---|---|
+| `ESPMQTTCLIENT_ENABLE_OTA` | `enableOTA()` (ArduinoOTA) |
+| `ESPMQTTCLIENT_ENABLE_WEB_UPDATER` | `enableHTTPWebUpdater()` (web server on port 80) |
+
+Without the flag, the matching function isn't declared, so calling it is a compile error. Set the flag for the whole build, not with a `#define` in your sketch: the library's own `.cpp` must see the same flags, because they change the class layout. In PlatformIO:
+```ini
+build_flags = -DESPMQTTCLIENT_ENABLE_OTA
 ```
 
 ### Connection established callback
