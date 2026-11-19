@@ -1,6 +1,9 @@
 #ifndef ESP32_HTTP_UPDATE_SERVER_H
 #define ESP32_HTTP_UPDATE_SERVER_H
 
+// Only used by the optional web updater (see EspMQTTClient.h).
+#ifdef ESPMQTTCLIENT_ENABLE_WEB_UPDATER
+
 /*
   Based on the HTTP update exemple of ESP32 core
 */
@@ -99,5 +102,7 @@ public:
     _server->begin();
   }
 };
+
+#endif // ESPMQTTCLIENT_ENABLE_WEB_UPDATER
 
 #endif
